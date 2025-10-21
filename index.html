@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="it">
+\1
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="icon" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore CSV</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-add {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-download {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-clear {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 101, 101, 0.4);
+        }
+
+        .data-table {
+            margin-top: 30px;
+            overflow-x: auto;
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .btn-delete {
+            background: #fc8181;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-delete:hover {
+            background: #f56565;
+        }
+
+        .count {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Generatore CSV Spese</h1>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fornitore">Fornitore</label>
+                <input type="text" id="fornitore">
+            </div>
+
+            <div class="form-group">
+                <label for="data">Data</label>
+                <input type="date" id="data">
+            </div>
+
+            <div class="form-group">
+                <label for="totale">Totale (€)</label>
+                <input type="number" id="totale" step="0.01">
+            </div>
+
+            <div class="form-group">
+                <label for="categoria">Categoria</label>
+                <input type="text" id="categoria">
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn-add" onclick="aggiungiVoce()">➕ Aggiungi</button>
+            <button class="btn-download" onclick="scaricaTXT()">⬇️ Scarica TXT (CSV)</button>
+            <button class="btn-clear" onclick="cancellaTutto()">🗑️ Cancella Tutto</button>
+        </div>
+
+        <div class="data-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fornitore</th>
+                        <th>Data</th>
+                        <th>Totale</th>
+                        <th>Categoria</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            Nessun dato inserito. Inizia aggiungendo una voce!
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="count" id="count">Totale voci: 0</div>
+        </div>
+    </div>
+
+    <script>
+        let dati = [];
+
+        // Carica dati salvati
+        window.addEventListener('load', () => {
+            const salvati = localStorage.getItem('csvData');
+            if (salvati) {
+                dati = JSON.parse(salvati);
+                aggiornaTabella();
+            }
+        });
+
+        function aggiungiVoce() {
+            const fornitore = document.getElementById('fornitore').value;
+            const data = document.getElementById('data').value;
+            const totale = document.getElementById('totale').value;
+            const categoria = document.getElementById('categoria').value;
+            
+            if (!fornitore || !data || !totale || !categoria) {
+                alert('Compila tutti i campi!');
+                return;
+            }
+            
+            dati.push({ fornitore, data, totale, categoria });
+            salvaDati();
+            aggiornaTabella();
+            
+            // Resetta i campi
+            document.getElementById('fornitore').value = '';
+            document.getElementById('data').value = '';
+            document.getElementById('totale').value = '';
+            document.getElementById('categoria').value = '';
+            document.getElementById('fornitore').focus();
+        }
+
+        function aggiornaTabella() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            if (dati.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nessun dato inserito. Inizia aggiungendo una voce!</td></tr>';
+            } else {
+                dati.forEach((voce, index) => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${voce.fornitore}</td>
+                        <td>${voce.data}</td>
+                        <td>€ ${parseFloat(voce.totale).toFixed(2)}</td>
+                        <td>${voce.categoria}</td>
+                        <td><button class="btn-delete" onclick="eliminaVoce(${index})">Elimina</button></td>
+                    `;
+                });
+            }
+            
+            document.getElementById('count').textContent = `Totale voci: ${dati.length}`;
+        }
+
+        function eliminaVoce(index) {
+            dati.splice(index, 1);
+            salvaDati();
+            aggiornaTabella();
+        }
+
+        function cancellaTutto() {
+            if (confirm('Sei sicuro di voler cancellare tutti i dati?')) {
+                dati = [];
+                salvaDati();
+                aggiornaTabella();
+            }
+        }
+
+        function salvaDati() {
+            localStorage.setItem('csvData', JSON.stringify(dati));
+        }
+
+        function scaricaTXT() {
+            if (dati.length === 0) {
+                alert('Nessun dato da esportare!');
+                return;
+            }
+            
+            // Crea il contenuto CSV
+            let contenuto = 'Fornitore;Data;Totale;Categoria\n';
+            
+            dati.forEach(voce => {
+                contenuto += `${voce.fornitore};${voce.data};${voce.totale};${voce.categoria}\n`;
+            });
+            
+            // Crea e scarica il file TXT
+            const blob = new Blob([contenuto], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const dataOggi = new Date().toISOString().slice(0, 10);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `spese_${dataOggi}.txt`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Permetti invio con Enter
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                aggiungiVoce();
+            }
+        });
+    </script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(console.error);
+        });
+    }
+    </script>
+    
+</body>
+</html>
